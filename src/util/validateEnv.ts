@@ -1,4 +1,4 @@
-import {cleanEnv, num, port, str} from "envalid"
+import {cleanEnv, port, str} from "envalid"
 
 export function validateEnv() {
     cleanEnv(process.env, {
@@ -7,3 +7,5 @@ export function validateEnv() {
         JWT_SECRET: str()
     });
 }
+
+export default validateEnv
