@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "jest",
-    "dev": "nodemon ./src/server.ts"
+    "dev": "nodemon ./src/server.ts",
+    "typeorm:cli": "ts-node ./node_modules/typeorm/cli -f ./src/ormconfig.ts"
   },
   "keywords": [],
   "author": "",
@@ -33,6 +34,9 @@
     "envalid": "^6.0.1",
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.9.10"
+    "mongoose": "^5.9.10",
+    "pg": "^8.0.3",
+    "reflect-metadata": "^0.1.13",
+    "typeorm": "^0.2.24"
   }
 }

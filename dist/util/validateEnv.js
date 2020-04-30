@@ -8,5 +8,5 @@ function validateEnv() {
         JWT_SECRET: envalid_1.str()
     });
 }
-exports.validateEnv = validateEnv;
+exports.default = validateEnv;
 //# sourceMappingURL=validateEnv.js.map

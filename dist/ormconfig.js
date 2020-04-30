@@ -1,0 +1,23 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+require("dotenv").config();
+const config = {
+    type: "postgres",
+    host: process.env.POSTGRES_HOST,
+    port: Number(process.env.POSTGRES_PORT),
+    username: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DB,
+    entities: [
+        __dirname + "/../**/*.entity{.ts,.js}",
+    ],
+    migrations: [
+        "src/migrations/*.ts"
+    ],
+    cli: {
+        migrationsDir: "src/migrations",
+    }
+};
+// syncronhise is good for development because it generates schemas on start but not good for production cuz data loss
+exports.default = config;
+//# sourceMappingURL=ormconfig.js.map

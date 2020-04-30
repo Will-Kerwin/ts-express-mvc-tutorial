@@ -25,35 +25,35 @@ const UserWithThatEmailAlreadyExistsException_1 = __importDefault(require("../ex
 const WrongCredentialsException_1 = __importDefault(require("../exceptions/WrongCredentialsException"));
 const validation_middleware_1 = __importDefault(require("../middleware/validation.middleware"));
 const user_dto_1 = __importDefault(require("../users/user.dto"));
-const user_model_1 = __importDefault(require("../users/user.model"));
 const login_dto_1 = __importDefault(require("./login.dto"));
 const jwt = __importStar(require("jsonwebtoken"));
+const typeorm_1 = require("typeorm");
+const user_entity_1 = __importDefault(require("../users/user.entity"));
 class AuthenticationController {
     constructor() {
         this.path = "/auth";
         this.router = express.Router();
-        this.user = user_model_1.default;
+        this.userRepository = typeorm_1.getRepository(user_entity_1.default);
         this.salt = 12;
         this.registration = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const userData = req.body;
-            if (yield this.user.findOne({ email: userData.email })) {
+            if (yield this.userRepository.findOne({ email: userData.email })) {
                 next(new UserWithThatEmailAlreadyExistsException_1.default(userData.email));
             }
             else {
                 const hashedPassword = yield bcrypt.hash(userData.password, this.salt);
-                const user = yield this.user.create(Object.assign(Object.assign({}, userData), { password: hashedPassword }));
-                //@ts-ignore
+                const user = yield this.userRepository.create(Object.assign(Object.assign({}, userData), { password: hashedPassword }));
+                // @ts-ignore
                 user.password = undefined;
                 res.send(user);
             }
         });
         this.loggingIn = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const logInData = req.body;
-            const user = yield this.user.findOne({ email: logInData.email });
+            const user = yield this.userRepository.findOne({ email: logInData.email });
             if (user) {
                 const isPasswordMatching = yield bcrypt.compare(logInData.password, user.password);
                 if (isPasswordMatching) {
-                    //@ts-ignore
                     user.password = undefined;
                     const tokenData = this.createToken(user);
                     res.setHeader("set-Cookie", [this.createCookie(tokenData)]);
@@ -80,11 +80,9 @@ class AuthenticationController {
     }
     createToken(user) {
         const expiresIn = 60 * 60; // hour
-        // @ts-ignore
         const secret = process.env.JWT_SECRET;
-        const _id = user._id;
         const dataStoredInToken = {
-            _id: _id,
+            _id: user.id,
         };
         return {
             expiresIn,

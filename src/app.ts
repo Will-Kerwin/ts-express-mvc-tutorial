@@ -10,7 +10,6 @@ class App {
 
     constructor(controllers: IController[]) {
         this.app = express();
-        this.connectToDatabase()
         this.initializeErrorHandling()
         this.initializeMiddleware()
         this.initializeControllers(controllers)
@@ -40,23 +39,6 @@ class App {
         controllers.forEach((controller) => {
             this.app.use('/', controller.router);
         });
-    }
-
-    private connectToDatabase() {
-        //@ts-ignore
-        const DatabaseURL: string = process.env.DATABASE_URL
-
-        mongoose.connect(DatabaseURL,
-            {
-                useNewUrlParser: true,
-                useUnifiedTopology: true
-            })
-            .catch(err => {
-                console.log(`Database error ${err}`)
-            })
-        mongoose.connection.once("open", function () {
-            console.log("connection Successful")
-        })
     }
 
 }

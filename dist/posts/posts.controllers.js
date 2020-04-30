@@ -13,24 +13,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const posts_model_1 = __importDefault(require("./posts.model"));
 const PostNotFoundException_1 = __importDefault(require("../exceptions/PostNotFoundException"));
 const validation_middleware_1 = __importDefault(require("../middleware/validation.middleware"));
 const post_dto_1 = __importDefault(require("./post.dto"));
 const auth_middleware_1 = __importDefault(require("../middleware/auth.middleware"));
+const typeorm_1 = require("typeorm");
+const post_entity_1 = __importDefault(require("./post.entity"));
 class PostsController {
     constructor() {
         this.path = "/posts";
         this.router = express_1.Router();
-        this.post = posts_model_1.default;
+        this.postRepository = typeorm_1.getRepository(post_entity_1.default);
         this.getAllPosts = (request, response) => __awaiter(this, void 0, void 0, function* () {
-            const posts = yield this.post.find()
-                .populate('author', '-password');
+            const posts = yield this.postRepository.find({ relations: ["categories"] });
             response.send(posts);
         });
         this.getPostById = (request, response, next) => __awaiter(this, void 0, void 0, function* () {
             const id = request.params.id;
-            const post = yield this.post.findById(id);
+            const post = yield this.postRepository.findOne(id, { relations: ["categories"] });
             if (post) {
                 response.send(post);
             }
@@ -41,9 +41,10 @@ class PostsController {
         this.modifyPost = (request, response, next) => __awaiter(this, void 0, void 0, function* () {
             const id = request.params.id;
             const postData = request.body;
-            const post = yield this.post.findByIdAndUpdate(id, postData, { new: true });
-            if (post) {
-                response.send(post);
+            yield this.postRepository.update(id, postData);
+            const updatedPost = yield this.postRepository.findOne(id);
+            if (updatedPost) {
+                response.send(updatedPost);
             }
             else {
                 next(new PostNotFoundException_1.default(id));
@@ -51,17 +52,15 @@ class PostsController {
         });
         this.createPost = (request, response) => __awaiter(this, void 0, void 0, function* () {
             const postData = request.body;
-            //@ts-ignore
-            const { _id } = request.user;
-            const createdPost = new this.post(Object.assign(Object.assign({}, postData), { author: _id }));
-            const savedPost = yield createdPost.save();
-            response.send(savedPost);
+            const newPost = this.postRepository.create(Object.assign(Object.assign({}, postData), { author: request.user }));
+            yield this.postRepository.save(newPost);
+            response.send(newPost);
         });
         this.deletePost = (request, response, next) => __awaiter(this, void 0, void 0, function* () {
             const id = request.params.id;
-            const successResponse = yield this.post.findByIdAndDelete(id);
+            const successResponse = yield this.postRepository.delete(id);
             if (successResponse) {
-                response.send(200);
+                response.sendStatus(200);
             }
             else {
                 next(new PostNotFoundException_1.default(id));

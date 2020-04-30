@@ -5,17 +5,17 @@ import WrongCredentialsException from '../exceptions/WrongCredentialsException';
 import IController from "../interfaces/controller.interface";
 import validationMiddleware from "../middleware/validation.middleware";
 import CreateUserDTO from "../users/user.dto";
-import userModel from "../users/user.model";
 import LoginDto from "./login.dto";
-import IUser from "../users/user.interface";
 import ITokenData from "../interfaces/tokenData.interface";
 import IDataStoredInToken from "../interfaces/dataStoredInToken.interface";
 import * as jwt from "jsonwebtoken"
+import {getRepository} from "typeorm";
+import User from "../users/user.entity";
 
 class AuthenticationController implements IController{
     public path: string ="/auth";
     public router: express.Router = express.Router();
-    private user = userModel;
+    private userRepository = getRepository(User);
     private salt: number = 12;
 
     constructor() {
@@ -31,16 +31,16 @@ class AuthenticationController implements IController{
     private registration = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         const userData: CreateUserDTO = req.body;
         if(
-            await this.user.findOne({email: userData.email})
+            await this.userRepository.findOne({email: userData.email})
         ){
             next(new UserWithThatEmailAlreadyExistsException(userData.email));
         }else {
             const hashedPassword = await bcrypt.hash(userData.password, this.salt);
-            const user = await this.user.create({
+            const user = await this.userRepository.create({
                 ...userData,
                 password:hashedPassword,
             });
-            //@ts-ignore
+            // @ts-ignore
             user.password = undefined;
             res.send(user)
         }
@@ -48,7 +48,7 @@ class AuthenticationController implements IController{
 
     private loggingIn = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         const logInData: LoginDto = req.body;
-        const user = await this.user.findOne({email: logInData.email});
+        const user = await this.userRepository.findOne({email: logInData.email});
         if(user) {
             const isPasswordMatching = await bcrypt.compare(logInData.password, user.password);
             if(isPasswordMatching){
@@ -65,13 +65,11 @@ class AuthenticationController implements IController{
         }
     }
 
-    private createToken(user: IUser): ITokenData {
+    private createToken(user: User): ITokenData {
         const expiresIn = 60*60; // hour
-        // @ts-ignore
-        const secret: string = process.env.JWT_SECRET;
-        const _id: string = user._id;
+        const secret: string = <string>process.env.JWT_SECRET;
         const dataStoredInToken: IDataStoredInToken = {
-            _id: _id,
+            _id: <string> user.id,
         };
         return {
             expiresIn,

@@ -22,17 +22,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const jwt = __importStar(require("jsonwebtoken"));
 const AuthenticationTokenMissingException_1 = __importDefault(require("../exceptions/AuthenticationTokenMissingException"));
 const WrongAuthenticationTokenException_1 = __importDefault(require("../exceptions/WrongAuthenticationTokenException"));
-const user_model_1 = __importDefault(require("../users/user.model"));
+const user_entity_1 = __importDefault(require("../users/user.entity"));
+const typeorm_1 = require("typeorm");
 function authMiddleware(request, response, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const cookies = request.cookies;
+        const userRepository = typeorm_1.getRepository(user_entity_1.default);
         if (cookies && cookies.Authorization) {
-            //@ts-ignore
             const secret = process.env.JWT_SECRET;
             try {
                 const verificationResponse = jwt.verify(cookies.Authorization, secret);
                 const id = verificationResponse._id;
-                const user = yield user_model_1.default.findById(id);
+                const user = yield userRepository.findOne(id);
                 if (user) {
                     request.user = user;
                     next();

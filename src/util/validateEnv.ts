@@ -1,6 +1,6 @@
-import {cleanEnv, num, port, str} from "envalid"
+import {cleanEnv, port, str} from "envalid"
 
-export function validateEnv() {
+export default function validateEnv() {
     cleanEnv(process.env, {
         DATABASE_URL: str(),
         PORT: port(),
